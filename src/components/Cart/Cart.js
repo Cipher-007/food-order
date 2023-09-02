@@ -5,6 +5,8 @@ import CartItem from "./CartItem";
 import classes from "./Cart.module.css";
 import CartContext from "../../store/cart-context";
 import Checkout from "./Checkout";
+import { push, ref } from "firebase/database";
+import { db } from "../../utils/firebase";
 
 const Cart = (props) => {
   const [isCheckout, setIsCheckout] = useState(false);
@@ -29,15 +31,14 @@ const Cart = (props) => {
 
   const submitOrderHandler = async (userData) => {
     setIsSubmitting(true);
-    await fetch(`${process.env.REACT_APP_OURL}`, {
-      method: "POST",
-      body: JSON.stringify({
-        user: userData,
-        orderedItems: cartCtx.items,
-      }),
-    });
+    const orderId = push(ref(db, "orders"), userData).key;
+
+    if (orderId) {
+      setDidSubmit(true);
+    } else {
+      setDidSubmit(false);
+    }
     setIsSubmitting(false);
-    setDidSubmit(true);
     cartCtx.clearCart();
   };
 
