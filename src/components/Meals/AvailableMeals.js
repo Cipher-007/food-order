@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import Card from "../UI/Card";
 import MealItem from "./MealItem/MealItem";
 import classes from "./AvailableMeals.module.css";
+import { db } from "../../utils/firebase";
+import { get, ref } from "firebase/database";
 
 const AvailableMeals = () => {
   const [meals, setMeals] = useState([]);
@@ -10,28 +12,23 @@ const AvailableMeals = () => {
 
   useEffect(() => {
     const fetchMeals = async () => {
-      const response = await fetch(`${process.env.REACT_APP_MURL}`);
+      const snapshot = await get(ref(db, "meals"));
+      if (snapshot.exists()) {
+        const res = snapshot.val();
+        const loadedMeals = [];
 
-      if (!response.ok) {
-        throw new Error("Something went wrong!");
+        for (const key in res) {
+          loadedMeals.push({
+            id: key,
+            name: res[key].name,
+            description: res[key].description,
+            price: res[key].price,
+          });
+        }
+        setMeals(loadedMeals);
+        setIsLoading(false);
       }
-
-      const responseData = await response.json();
-
-      const loadedMeals = [];
-
-      for (const key in responseData) {
-        loadedMeals.push({
-          id: key,
-          name: responseData[key].name,
-          description: responseData[key].description,
-          price: responseData[key].price,
-        });
-      }
-      setMeals(loadedMeals);
-      setIsLoading(false);
     };
-
     fetchMeals().catch((error) => {
       setIsLoading(false);
       setHttpError(error.message);
